@@ -28,13 +28,14 @@ Baseline model for "GraspNet-1Billion: A Large-Scale Benchmark for General Objec
 ## Installation
 Get the code.
 ```bash
-git clone https://github.com/graspnet/graspnet-baseline.git
-cd graspnet-baseline
+git clone https://github.com/Zionshang/graspnet.git
+cd graspnet
 ```
 Install packages via Pip.
 ```bash
 conda create -n graspnet python=3.8
 conda activate graspnet
+# recommend to install torch first
 pip install torch==2.0.0  # please match with your cuda version, this is the example of cuda11.8 in RTX4060
 pip install -r requirements.txt
 ```
