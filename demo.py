@@ -52,17 +52,25 @@ def get_and_process_data(data_dir):
     # load data
     color = np.array(Image.open(os.path.join(data_dir, 'color.png')), dtype=np.float32) / 255.0
     depth = np.array(Image.open(os.path.join(data_dir, 'depth.png')))
+    # workspace_mask is saved as single-channel grayscale already, no need to convert here
     workspace_mask = np.array(Image.open(os.path.join(data_dir, 'workspace_mask.png')))
-    meta = scio.loadmat(os.path.join(data_dir, 'meta.mat'))
-    intrinsic = meta['intrinsic_matrix']
-    factor_depth = meta['factor_depth']
-
+    # 原先从 meta.mat 读取内参的逻辑（已注释，保留以供参考）：
+    # meta = scio.loadmat(os.path.join(data_dir, 'meta.mat'))
+    # intrinsic = meta['intrinsic_matrix']
+    # factor_depth = float(np.squeeze(meta['factor_depth']))
+    # 使用从 RealSense 查询并提供的固定内参（用户提供的值）
+    intrinsic = np.array([[606.44, 0.0, 322.35], [0.0, 606.48, 239.54], [0.0, 0.0, 1.0]], dtype=np.float32)
+    factor_depth = float(999.999952502551)
     # generate cloud
-    camera = CameraInfo(1280.0, 720.0, intrinsic[0][0], intrinsic[1][1], intrinsic[0][2], intrinsic[1][2], factor_depth)
+    #camera = CameraInfo(1280.0, 720.0, intrinsic[0][0], intrinsic[1][1], intrinsic[0][2], intrinsic[1][2], factor_depth)
+    # 使用读取到的图像分辨率来创建 CameraInfo，以便 camera 适应提供的 depth/color 图像
+    img_h, img_w = depth.shape[:2]
+    camera = CameraInfo(float(img_w), float(img_h), intrinsic[0][0], intrinsic[1][1], intrinsic[0][2], intrinsic[1][2], factor_depth)
     cloud = create_point_cloud_from_depth_image(depth, camera, organized=True)
 
     # get valid points
-    mask = (workspace_mask & (depth > 0))
+    # 使用布尔逻辑判断：workspace_mask>0 且 depth>0，避免通道或 dtype 导致的广播问题
+    mask = (workspace_mask > 0) & (depth > 0)
     cloud_masked = cloud[mask]
     color_masked = color[mask]
 
@@ -120,5 +128,5 @@ def demo(data_dir):
     vis_grasps(gg, cloud)
 
 if __name__=='__main__':
-    data_dir = 'doc/example_data'
+    data_dir = 'doc/example_data_01'
     demo(data_dir)
