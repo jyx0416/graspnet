@@ -40,7 +40,7 @@ except Exception:
     YOLO = None
     _HAS_YOLO = False
 
-import pyrealsense2 as rs
+import pyrealsense2 as rs # pyrealsense2==2.54.2.5684
 
 
 def safe_transform(geom, T):
@@ -173,7 +173,7 @@ def yolo_get_mask(yolo_model, color, yolo_predict_params):
             if mask_acc.sum() > 0:
                 return (mask_acc * 255).astype(np.uint8), seg_vis
         # 未检测到目标
-        return None, seg_vis
+        return None, None
     except Exception as e:
         print('YOLO predict failed:', e)
         return None, None
@@ -273,8 +273,12 @@ def main():
     profile = pipeline.start(config)
 
     # Use fixed intrinsics and factor_depth (use demo defaults)
-    intrinsic = np.array([[606.44, 0.0, 322.35], [0.0, 606.48, 239.54], [0.0, 0.0, 1.0]], dtype=np.float32)
-    factor_depth = float(999.999952502551)
+    # D435i
+    # intrinsic = np.array([[606.44, 0.0, 322.35], [0.0, 606.48, 239.54], [0.0, 0.0, 1.0]], dtype=np.float32)
+    # factor_depth = float(999.999952502551)
+    # L515
+    intrinsic = np.array([[607.451721, 0.0, 329.049744], [0.0, 607.656555, 248.114029], [0.0, 0.0, 1.0]], dtype=np.float32)
+    factor_depth = float(3999.999810)
     camera_info = CameraInfo(float(color_w), float(color_h), intrinsic[0][0], intrinsic[1][1], intrinsic[0][2], intrinsic[1][2], factor_depth)
 
     # 初始化 Open3D 可视化器（与 demo.py 相似）

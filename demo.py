@@ -128,5 +128,5 @@ def demo(data_dir):
     vis_grasps(gg, cloud)
 
 if __name__=='__main__':
-    data_dir = 'doc/example_data_01'
+    data_dir = 'doc/example_data'
     demo(data_dir)
