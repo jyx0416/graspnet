@@ -139,6 +139,14 @@ def prepare_end_points(color, depth, camera_info, num_point, device, workspace_m
     color_rgb = cv2.cvtColor(color, cv2.COLOR_BGR2RGB).astype(np.float32) / 255.0
     color_masked = color_rgb[mask]
 
+    # 兜底：若掩码∩有效深度为空返回 None 让上层跳过本帧
+    if cloud_masked.size == 0:
+        # mask_fb = (depth > 0)
+        # cloud_masked = cloud[mask_fb]
+        # color_masked = color_rgb[mask_fb]
+        # if cloud_masked.size == 0:
+        return None, cloud, None, None
+
     # sample
     if len(cloud_masked) >= num_point:
         idxs = np.random.choice(len(cloud_masked), num_point, replace=False)
@@ -186,6 +194,20 @@ def run_graspnet_for_mask(net, device, color, depth, camera_info, args, vis, pcd
     # update Open3D point cloud (use masked points/colors)
     update_pcd(pcd, cloud_masked, color_masked, T)
     vis.update_geometry(pcd)
+
+    # 无有效点云时：清空抓取几何并跳过推理
+    if end_points is None:
+        print('[Warn] 当前帧无有效点云，清空抓取几何并跳过预测。')
+        if gripper_geoms:
+            for g in gripper_geoms:
+                try:
+                    vis.remove_geometry(g)
+                except Exception:
+                    pass
+            gripper_geoms = []
+        vis.poll_events()
+        vis.update_renderer()
+        return [], None
 
     with torch.no_grad():
         end_points = net(end_points)
